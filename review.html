@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Write a Review</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            width: 50%;
+        }
+        textarea {
+            width: 100%;
+            height: 100px;
+            background-color: #333;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .stars {
+            display: flex;
+            justify-content: center;
+            margin: 10px 0;
+        }
+        .star {
+            font-size: 30px;
+            cursor: pointer;
+            color: gray;
+        }
+        .star:hover,
+        .star.selected {
+            color: gold;
+        }
+        button {
+            background-color: #ff9900;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        .nav-links {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+        }
+        .nav-links a {
+            color: #ff9900;
+            text-decoration: none;
+            margin-left: 20px;
+        }
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.6.10/firebase-auth.js";
+
+        const firebaseConfig = {
+  apiKey: "AIzaSyBwLRRKIwsSPmvFXnDn5UcweXli12w1Qr0",
+  authDomain: "cinephile-250fc.firebaseapp.com",
+  databaseURL: "https://cinephile-250fc-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "cinephile-250fc",
+  storageBucket: "cinephile-250fc.firebasestorage.app",
+  messagingSenderId: "995080104071",
+  appId: "1:995080104071:web:150cd3e9f3d8a905097022",
+  measurementId: "G-QX66DDM9ZD"
+};
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth();
+
+        let selectedRating = 0;
+
+        document.querySelectorAll(".star").forEach(star => {
+            star.addEventListener("click", function() {
+                selectedRating = this.getAttribute("data-value");
+                document.querySelectorAll(".star").forEach(s => s.classList.remove("selected"));
+                this.classList.add("selected");
+            });
+        });
+
+        document.getElementById("reviewForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const movieId = new URLSearchParams(window.location.search).get("movieId");
+            const reviewText = document.getElementById("reviewText").value;
+
+            onAuthStateChanged(auth, async (user) => {
+                if (user) {
+                    const userId = user.uid;
+                    const reviewData = {
+                        userId: userId,
+                        movieId: movieId,
+                        review: reviewText,
+                        rating: selectedRating,
+                        timestamp: new Date()
+                    };
+
+                    try {
+                        await addDoc(collection(db, "reviews"), reviewData);
+                        alert("Review submitted successfully!");
+                        window.location.href = `profile.html?userId=${userId}`;
+                    } catch (error) {
+                        console.error("Error adding review: ", error);
+                    }
+                } else {
+                    alert("You need to be logged in to submit a review.");
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="nav-links">
+        <a href="recommendations.html">Get Movie Recommendations</a>
+    </div>
+    <div class="container">
+        <h2>Write a Review</h2>
+        <form id="reviewForm">
+            <div class="stars">
+                <span class="star" data-value="1">★</span>
+                <span class="star" data-value="2">★</span>
+                <span class="star" data-value="3">★</span>
+                <span class="star" data-value="4">★</span>
+                <span class="star" data-value="5">★</span>
+            </div>
+            <textarea id="reviewText" placeholder="Write your review here..." required></textarea>
+            <button type="submit">Submit Review</button>
+        </form>
+    </div>
+</body>
+</html>

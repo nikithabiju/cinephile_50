@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Recommendations</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #333;
+            color: white;
+        }
+        button {
+            background-color: #ff9900;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .recommendations {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .movie-card {
+            background-color: #1e1e1e;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .movie-card h3 {
+            margin: 0;
+            font-size: 1.1em;
+        }
+        .loading {
+            text-align: center;
+            display: none;
+        }
+        .error {
+            color: #ff4444;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Movie Recommendations</h1>
+        <div class="search-box">
+            <input type="text" id="movieInput" placeholder="Enter a movie name...">
+            <button onclick="getRecommendations()">Get Recommendations</button>
+        </div>
+        <div id="loading" class="loading">Loading recommendations...</div>
+        <div id="error" class="error"></div>
+        <div id="recommendations" class="recommendations"></div>
+    </div>
+
+    <script>
+        async function getRecommendations() {
+            const movieInput = document.getElementById('movieInput').value;
+            const loading = document.getElementById('loading');
+            const error = document.getElementById('error');
+            const recommendations = document.getElementById('recommendations');
+
+            if (!movieInput) {
+                error.textContent = 'Please enter a movie name';
+                error.style.display = 'block';
+                return;
+            }
+
+            loading.style.display = 'block';
+            error.style.display = 'none';
+            recommendations.innerHTML = '';
+
+            try {
+                const response = await fetch(`http://localhost:5000/api/recommendations?movie_name=${encodeURIComponent(movieInput)}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    data.recommendations.forEach(movie => {
+                        const movieCard = document.createElement('div');
+                        movieCard.className = 'movie-card';
+                        movieCard.innerHTML = `<h3>${movie}</h3>`;
+                        recommendations.appendChild(movieCard);
+                    });
+                } else {
+                    error.textContent = data.error || 'Failed to get recommendations';
+                    error.style.display = 'block';
+                }
+            } catch (err) {
+                error.textContent = 'Error connecting to the server';
+                error.style.display = 'block';
+            } finally {
+                loading.style.display = 'none';
+            }
+        }
+
+        // Allow Enter key to trigger search
+        document.getElementById('movieInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                getRecommendations();
+            }
+        });
+    </script>
+</body>
+</html> 
